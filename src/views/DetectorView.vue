@@ -30,7 +30,14 @@ const BOX_COLORS = [
 ]
 
 // Компонент-обёртка над transformers.js
-const { instance, loading, progress, error, load } = usePipeline(MODEL_TASK, MODEL_NAME)
+// ★ dtype: 'fp32' — у нас скачан onnx/model.onnx (FP32, 166 МБ).
+//   Если бы использовали dtype: 'q8' (default), библиотека искала бы
+//   onnx/model_quantized.onnx, которого нет.
+const { instance, loading, progress, error, load } = usePipeline(
+  MODEL_TASK,
+  MODEL_NAME,
+  { dtype: 'fp32' },
+)
 
 // --- Состояние страницы (локальное, через ref) ---
 const imageUrl = ref(null) // выбранный URL изображения (object URL или путь к sample)

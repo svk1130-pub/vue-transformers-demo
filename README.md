@@ -19,7 +19,7 @@ Transition-анимации на «вау-задачах» из машинног
 # 1. Установить зависимости
 npm install
 
-# 2. Скачать модели (384 МБ) и WASM-файлы в public/
+# 2. Скачать модели (384 МБ) и WASM-файлы (требуется один раз)
 npm run setup
 
 # 3. Запустить dev-сервер
@@ -33,6 +33,22 @@ npm run dev
 npm run build      # production-сборка в dist/
 npm run preview    # локальный preview production-сборки
 ```
+
+## Важно про transformers.js v3 + Vite
+
+В `transformers.js` v3.x есть три неочевидных нюанса, которые учтены в `usePipeline.js`:
+
+1. **`env.allowLocalModels = true`** — по умолчанию в браузере `false`. Без этой
+   настройки библиотека игнорирует локальные файлы и пытается грузить с HF Hub,
+   но `allowRemoteModels = false` → загрузка падает.
+2. **`dtype`** — по умолчанию `'q8'` (квантованные модели, суффикс `_quantized`
+   в имени файла). Для `detr-resnet-50` мы передаём `dtype: 'fp32'`, потому что
+   скачан `onnx/model.onnx` (без квантования). Для `opus-mt-*` используем `'q8'`.
+3. **WASM-файлы в `src/wasm/`** — `onnxruntime-web` v1.21+ грузит WASM через
+   динамический `import()` `.mjs`-обёртки. Если `.mjs` лежит в `public/`, Vite
+   ломает импорт query-параметром `?import`. Поэтому `.mjs` + `.wasm` лежат в
+   `src/wasm/` и резолвятся через `new URL('../wasm/...', import.meta.url)`.
+   Скрипт `npm run setup` копирует их туда автоматически.
 
 ## Стек
 
@@ -58,21 +74,21 @@ src/
   components/
     AppSidebar.vue           # навигация
     DemoCard.vue             # карточка демо на хабе
-    ModelStatus.vue          # индикатор статуса модели
+    ModelStatus.vue           # индикатор статуса модели
     ProgressBar.vue          # прогресс загрузки
     ErrorBanner.vue          # баннер ошибки
   views/
     HomeView.vue             # хаб
     DetectorView.vue         # детектор объектов
     TranslatorView.vue       # переводчик
+  wasm/                      # генерируется через `npm run setup` (simd-threaded .mjs + .wasm)
   assets/styles/base.css     # глобальные стили + CSS-переменные
 public/
   favicon.svg
   samples/                   # примеры изображений
   models/                    # генерируется через `npm run setup`
-  wasm/                      # генерируется через `npm run setup`
 scripts/
-  download-models.js         # `npm run setup`
+  download-models.js         # `npm run setup` (модели + WASM)
   download_samples.py        # утилита скачивания примеров
 ```
 

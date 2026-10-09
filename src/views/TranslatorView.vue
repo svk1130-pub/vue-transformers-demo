@@ -27,8 +27,11 @@ const MODELS = {
 const demoStore = useDemoStore()
 
 // Два pipeline — по одному на направление (обёртки над transformers.js)
-const ruEn = usePipeline(MODELS.ru_en.task, MODELS.ru_en.model)
-const enRu = usePipeline(MODELS.en_ru.task, MODELS.en_ru.model)
+// ★ dtype: 'q8' — у нас скачаны onnx/encoder_model_quantized.onnx
+//   и onnx/decoder_model_merged_quantized.onnx (int8-квантованные).
+//   Это совпадает с дефолтом transformers.js, но указываем явно для надёжности.
+const ruEn = usePipeline(MODELS.ru_en.task, MODELS.ru_en.model, { dtype: 'q8' })
+const enRu = usePipeline(MODELS.en_ru.task, MODELS.en_ru.model, { dtype: 'q8' })
 
 // --- Состояние ---
 const inputText = ref('') // текст пользователя
