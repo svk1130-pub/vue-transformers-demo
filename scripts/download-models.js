@@ -17,7 +17,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 
 const MODELS_DIR = join(ROOT, 'public', 'models')
-const WASM_DIR = join(ROOT, 'public', 'wasm')
+// ★ ВАЖНО: WASM-файлы кладём в src/wasm/, а НЕ в public/wasm/.
+//   onnxruntime-web v1.21+ грузит WASM через динамический import() .mjs-обёртки.
+//   Vite ломает import, если .mjs лежит в public/ (добавляет ?import query).
+//   Файлы в src/wasm/ Vite корректно резолвит через new URL(..., import.meta.url)
+//   в usePipeline.js и даёт статический URL без перехвата.
+const WASM_DIR = join(ROOT, 'src', 'wasm')
 
 // Базовый URL HuggingFace Hub
 const HF_BASE = 'https://huggingface.co'
@@ -54,11 +59,12 @@ const MODELS = {
 }
 
 // WASM-файлы, которые копируем из node_modules/onnxruntime-web/dist/
+// Включаем и .wasm, и .mjs-обёртки: ONNX Runtime Web в новых версиях требует
+// .mjs-файл-посредник для динамического импорта WebAssembly.
+// Кладём только simd-threaded вариант — он идёт в onnxruntime-web dist по умолчанию.
 const WASM_FILES = [
   'ort-wasm-simd-threaded.wasm',
-  'ort-wasm-simd-threaded.jsep.wasm',
-  'ort-wasm-threaded.wasm',
-  'ort-wasm.wasm',
+  'ort-wasm-simd-threaded.mjs',
 ]
 
 // ---------------------------------------------------------------------------
@@ -191,7 +197,7 @@ async function main() {
   await downloadModels()
 
   console.log('\n============================================')
-  console.log('  Готово! Модели в public/models/, WASM в public/wasm/')
+  console.log('  Готово! Модели в public/models/, WASM в src/wasm/')
   console.log('  Теперь можно запускать: npm run dev')
   console.log('============================================\n')
 }
