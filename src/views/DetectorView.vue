@@ -235,14 +235,14 @@ function drawBoxes() {
           Выбрать файл
           <input type="file" accept="image/*" hidden @change="onFileChange" />
         </label>
-        <button class="detector__btn detector__btn--ghost" @click="loadSample('cat.jpg')">
-          Пример: кот
+        <button class="detector__btn detector__btn--ghost" @click="loadSample('apples_bananas.jpg')">
+          Пример: фрукты
         </button>
         <button class="detector__btn detector__btn--ghost" @click="loadSample('street.jpg')">
           Пример: улица
         </button>
-        <button class="detector__btn detector__btn--ghost" @click="loadSample('dog.jpg')">
-          Пример: собака
+        <button class="detector__btn detector__btn--ghost" @click="loadSample('people.jpg')">
+          Пример: люди
         </button>
       </div>
     </div>
@@ -376,8 +376,12 @@ function drawBoxes() {
 }
 .detector__img {
   display: block;
+  /* ★ Ограничиваем высоту изображения 512px; ширина масштабируется с сохранением пропорций */
+  max-height: 512px;
+  width: auto;
   max-width: 100%;
   height: auto;
+  object-fit: contain;
 }
 .detector__overlay {
   position: absolute;
