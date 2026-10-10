@@ -13,7 +13,7 @@
  *   - автоопределение направления по кириллице
  *   - <TransitionGroup> для предложений (staggering)
  */
-import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, inject, nextTick } from 'vue'
 import { usePipeline } from '@/composables/usePipeline'
 import { useDemoStore } from '@/stores/demoStore'
 import ModelStatus from '@/components/ModelStatus.vue'
@@ -162,12 +162,21 @@ watch(inputText, (val) => {
 })
 
 // --- Реакция на выбор примера из «Как это работает» ---
-watch(pendingText, (text) => {
+// ★ Сбрасываем ручное переопределение, чтобы автоопределение снова заработало.
+//   Старый перевод очищаем сразу — даже до запуска translate(),
+//   чтобы пользователь не видел «зависший» результат от предыдущего текста.
+//   Перевод запускаем автоматически (не ждём кнопки «Перевести»),
+//   но с yield, чтобы Vue успел отрендерить очищенный output.
+watch(pendingText, async (text) => {
   if (text) {
     inputText.value = text
-    // Сбрасываем ручное переопределение, чтобы автоопределение снова заработало
     manualOverride.value = false
+    translatedSentences.value = []  // ★ Очищаем старый перевод сразу
     pendingText.value = null
+    // Даём Vue отрендерить очищенный output ДО запуска translate()
+    await nextTick()
+    // Автоматически запускаем перевод — пользователь нажимать «Перевести» не должен
+    translate()
   }
 })
 </script>

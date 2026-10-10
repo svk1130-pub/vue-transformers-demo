@@ -339,9 +339,11 @@ function drawBoxes() {
     <Transition name="fade">
       <div v-if="imageUrl" class="detector__canvas-wrap">
         <!-- "Идёт детекция" — над изображением -->
-        <Transition name="fade">
-          <p v-if="inferencing" class="detector__inferring">Идёт детекция…</p>
-        </Transition>
+        <div class="detector__inferring-wrap">
+          <Transition v-if="inferencing" name="fade">
+            <span class="detector__inferring">Идёт детекция…</span>
+          </Transition>
+        </div>
         <div class="detector__canvas-inner">
           <!-- ★ Спиннер во время загрузки картинки (до её отображения) -->
           <div v-if="imageLoading" class="detector__loading">
@@ -471,11 +473,24 @@ function drawBoxes() {
   margin-bottom: 24px;
 }
 /* ★ "Идёт детекция" — над изображением */
-.detector__inferring {
+.detector__inferring-wrap {
+  min-height: 24px; /* резервируем место под одну строку текста */
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.detector__inferring {
   color: var(--color-text-muted);
   font-size: 14px;
   font-style: italic;
+  display: inline-block;
+}
+
+.detector__inferring--idle {
+  /* Невидимый placeholder — нужен, чтобы flex-контейнер не схлопывался.
+     Используем &nbsp; в шаблоне, но на всякий случай ставим минимальную ширину. */
+  min-width: 1px;
 }
 .detector__canvas-inner {
   position: relative;
