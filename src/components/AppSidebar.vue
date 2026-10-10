@@ -2,21 +2,24 @@
 /**
  * AppSidebar.vue — навигационный сайдбар.
  * Vue-техники:
- *   - <RouterLink> с авто-классом .router-link-active для подсветки активной ссылки
- *   - ссылки на хаб и демо-страницы
- *   - краткий список Vue-технологий из единого справочника src/data/techStack.js
+ *   - <RouterLink> с авто-классом .router-link-active для подсветки
+ *   - useProgressStore — галочки у изученных страниц
+ *   - <Transition> для плавного появления галочки
+ *   - краткий список Vue-технологий из techStack.js
  */
-import { useDemoStore } from '../stores/demoStore'
+import { useDemoStore } from '@/stores/demoStore'
+import { useProgressStore } from '@/stores/progress'
 import { storeToRefs } from 'pinia'
-import { techStackShort } from '../data/techStack'
+import { techStackShort } from '@/data/techStack'
 
 const demoStore = useDemoStore()
 const { currentModel } = storeToRefs(demoStore)
+const progress = useProgressStore()
 
 const navItems = [
-  { to: '/', label: 'Хаб', icon: '◆' },
-  { to: '/detector', label: 'Детектор объектов', icon: '◎' },
-  { to: '/translator', label: 'Переводчик', icon: '⇄' },
+  { to: '/', label: 'Хаб', icon: '◆', page: null },
+  { to: '/detector', label: 'Детектор объектов', icon: '◎', page: 'detector' },
+  { to: '/translator', label: 'Переводчик', icon: '⇄', page: 'translator' },
 ]
 </script>
 
@@ -38,11 +41,17 @@ const navItems = [
         class="sidebar__link"
       >
         <span class="sidebar__icon">{{ item.icon }}</span>
-        <span>{{ item.label }}</span>
+        <span class="sidebar__label">{{ item.label }}</span>
+        <Transition name="fade">
+          <span
+            v-if="item.page && progress.isVisited(item.page)"
+            class="sidebar__check"
+            title="Страница изучена"
+          >✓</span>
+        </Transition>
       </RouterLink>
     </nav>
 
-    <!-- Информация о текущей модели (из Pinia) -->
     <Transition name="fade">
       <div v-if="currentModel" class="sidebar__model-info">
         <div class="sidebar__model-label">Активная модель</div>
@@ -72,111 +81,58 @@ const navItems = [
 }
 
 .sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 8px;
+  display: flex; align-items: center; gap: 12px; padding: 0 8px;
 }
-
 .sidebar__logo {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 22px;
-  font-weight: 700;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  background: var(--color-primary); color: #fff;
+  font-size: 22px; font-weight: 700;
+  display: grid; place-items: center; flex-shrink: 0;
 }
+.sidebar__title { display: flex; flex-direction: column; line-height: 1.2; }
+.sidebar__title strong { font-size: 14px; color: var(--color-text); }
+.sidebar__title small { font-size: 11px; color: var(--color-text-muted); }
 
-.sidebar__title {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-.sidebar__title strong {
-  font-size: 14px;
-  color: var(--color-text);
-}
-.sidebar__title small {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.sidebar__nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.sidebar__nav { display: flex; flex-direction: column; gap: 4px; }
 
 .sidebar__link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  color: var(--color-text-muted);
-  font-size: 14px;
-  font-weight: 500;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radius-md);
+  color: var(--color-text-muted); font-size: 14px; font-weight: 500;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 .sidebar__link:hover {
-  background: var(--color-surface-alt);
-  color: var(--color-text);
-  text-decoration: none;
+  background: var(--color-surface-alt); color: var(--color-text); text-decoration: none;
 }
-
-/* Активная ссылка — подсветка (класс добавляется vue-router автоматически) */
 .sidebar__link.router-link-active {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background: var(--color-primary-soft); color: var(--color-primary-dark);
 }
-.sidebar__link.router-link-active .sidebar__icon {
-  color: var(--color-primary);
-}
+.sidebar__link.router-link-active .sidebar__icon { color: var(--color-primary); }
 
-.sidebar__icon {
-  font-size: 16px;
-  width: 20px;
-  text-align: center;
+.sidebar__icon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar__label { flex: 1; }
+.sidebar__check {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .sidebar__model-info {
-  margin-top: auto;
-  padding: 12px;
-  background: var(--color-surface-alt);
-  border-radius: var(--radius-md);
+  margin-top: auto; padding: 12px;
+  background: var(--color-surface-alt); border-radius: var(--radius-md);
 }
 .sidebar__model-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-muted);
-  margin-bottom: 4px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-text-muted); margin-bottom: 4px;
 }
-.sidebar__model-name {
-  font-size: 12px;
-  word-break: break-all;
-  color: var(--color-text);
-}
+.sidebar__model-name { font-size: 12px; word-break: break-all; color: var(--color-text); }
 
 .sidebar__footer {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  text-align: center;
-  padding-top: 12px;
+  font-size: 11px; color: var(--color-text-muted);
+  text-align: center; padding-top: 12px;
   border-top: 1px solid var(--color-border);
 }
 
-/* Появление информации о модели */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

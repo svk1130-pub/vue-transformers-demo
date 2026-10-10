@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
 
 // Конфигурация Vite для Vue 3 SPA
 // optimizeDeps исключён — transformers.js использует Web Worker/WASM и должен
@@ -8,6 +9,11 @@ export default defineConfig({
   plugins: [vue()],
   // Ограничиваем сканер зависимостей только index.html,
   // чтобы Vite не пытался обработать файлы из skills/ и прочих соседних директорий.
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },  
   optimizeDeps: {
     entries: ['index.html'],
   },
