@@ -8,6 +8,7 @@
  */
 import DemoCard from '../components/DemoCard.vue'
 import { ref } from 'vue'
+import { techStackFull } from '../data/techStack'
 
 const demos = ref([
   {
@@ -57,14 +58,22 @@ const demos = ref([
     </TransitionGroup>
 
     <section class="home__tech">
-      <h2>Технологии</h2>
-      <ul class="home__tech-list">
-        <li>Vue 3 — Composition API, <code>&lt;script setup&gt;</code></li>
-        <li>Vue Router 4 — ленивая загрузка страниц</li>
-        <li>Pinia — глобальное состояние</li>
-        <li><code>&lt;Transition&gt;</code> / <code>&lt;TransitionGroup&gt;</code> — анимации</li>
-        <li>transformers.js — инференс моделей в браузере (WASM/WebGPU)</li>
-      </ul>
+      <h2>Технологии Vue 3 в этом проекте:</h2>
+      <div class="home__tech-grid">
+        <div
+          v-for="group in techStackFull"
+          :key="group.category"
+          class="home__tech-group"
+        >
+          <h3 class="home__tech-cat">{{ group.category }}</h3>
+          <ul class="home__tech-list">
+            <li v-for="item in group.items" :key="item.name">
+              <code>{{ item.name }}</code>
+              <span class="home__tech-detail">{{ item.detail }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </section>
   </section>
 </template>
@@ -98,32 +107,55 @@ const demos = ref([
 }
 .home__tech h2 {
   font-size: 18px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
-.home__tech-list {
+
+.home__tech-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 8px 24px;
-  color: var(--color-text-muted);
+  gap: 24px;
+}
+
+.home__tech-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.home__tech-cat {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-primary-dark);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.home__tech-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .home__tech-list li {
   list-style: none;
-  position: relative;
-  padding-left: 18px;
-  font-size: 14px;
-}
-.home__tech-list li::before {
-  content: '▸';
-  position: absolute;
-  left: 0;
-  color: var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .home__tech-list code {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   background: var(--color-surface-alt);
   padding: 1px 6px;
   border-radius: 4px;
+  align-self: flex-start;
+  color: var(--color-text);
+}
+.home__tech-detail {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
 }
 
 /* === TransitionGroup со staggering === */

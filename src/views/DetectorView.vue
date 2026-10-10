@@ -235,14 +235,14 @@ function drawBoxes() {
           Выбрать файл
           <input type="file" accept="image/*" hidden @change="onFileChange" />
         </label>
-        <button class="detector__btn detector__btn--ghost" @click="loadSample('cat.jpg')">
-          Пример: кот
+        <button class="detector__btn detector__btn--ghost" @click="loadSample('apples_bananas.jpg')">
+          Пример: фрукты
         </button>
         <button class="detector__btn detector__btn--ghost" @click="loadSample('street.jpg')">
           Пример: улица
         </button>
-        <button class="detector__btn detector__btn--ghost" @click="loadSample('dog.jpg')">
-          Пример: собака
+        <button class="detector__btn detector__btn--ghost" @click="loadSample('people.jpg')">
+          Пример: люди
         </button>
       </div>
     </div>
@@ -250,6 +250,10 @@ function drawBoxes() {
     <!-- Превью изображения + canvas-overlay -->
     <Transition name="fade">
       <div v-if="imageUrl" class="detector__canvas-wrap">
+        <!-- ★ "Идёт детекция" — над изображением -->
+        <Transition name="fade">
+          <p v-if="inferencing" class="detector__inferring">Идёт детекция…</p>
+        </Transition>
         <div class="detector__canvas-inner">
           <img ref="imageEl" :src="imageUrl" alt="Загруженное изображение" class="detector__img" />
           <!-- Canvas поверх изображения; Transition появление -->
@@ -257,7 +261,6 @@ function drawBoxes() {
             <canvas v-if="detections.length" ref="canvasEl" class="detector__overlay"></canvas>
           </Transition>
         </div>
-        <p v-if="inferencing" class="detector__inferring">Идёт детекция…</p>
       </div>
     </Transition>
 
@@ -376,8 +379,12 @@ function drawBoxes() {
 }
 .detector__img {
   display: block;
+  /* ★ Ограничиваем высоту изображения 512px; ширина масштабируется с сохранением пропорций */
+  max-height: 512px;
+  width: auto;
   max-width: 100%;
   height: auto;
+  object-fit: contain;
 }
 .detector__overlay {
   position: absolute;
@@ -387,9 +394,10 @@ function drawBoxes() {
   pointer-events: none;
 }
 .detector__inferring {
-  margin-top: 8px;
+  margin-bottom: 8px;
   color: var(--color-text-muted);
   font-size: 14px;
+  font-style: italic;
 }
 
 .detector__results h2 {
