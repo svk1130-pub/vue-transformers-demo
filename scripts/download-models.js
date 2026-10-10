@@ -83,6 +83,44 @@ async function fileExistsNonEmpty(path) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// fetch с retry-логикой (для нестабильных сетей — особенно на Windows)
+// Экспоненциальная задержка: 1с → 2с → 4с → 8с (макс 30с)
+// Таймаут: 10 минут на файл (модели до 160 МБ на медленном канале)
+const FETCH_TIMEOUT_MS = 10 * 60 * 1000
+const FETCH_MAX_RETRIES = 5
+
+async function fetchWithRetry(url) {
+  for (let attempt = 1; attempt <= FETCH_MAX_RETRIES; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (vue-transformers-setup)',
+          'Accept': '*/*',
+        },
+        signal: controller.signal,
+        redirect: 'follow',
+      })
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
+      return Buffer.from(await res.arrayBuffer())
+    } catch (e) {
+      clearTimeout(timeout)
+      if (attempt === FETCH_MAX_RETRIES) {
+        throw new Error(`Все ${FETCH_MAX_RETRIES} попыток не удались: ${e.message}`)
+      }
+      const waitMs = Math.min(1000 * 2 ** (attempt - 1), 30000)
+      console.log(`    попытка ${attempt}/${FETCH_MAX_RETRIES}: ${e.message}, повтор через ${waitMs}мс`)
+      await new Promise((r) => setTimeout(r, waitMs))
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+}
+
 async function downloadFile(url, destPath) {
   if (await fileExistsNonEmpty(destPath)) {
     console.log(`  ✓ уже скачан: ${destPath.replace(ROOT + '/', '')}`)
@@ -91,16 +129,28 @@ async function downloadFile(url, destPath) {
   await ensureDir(dirname(destPath))
 
   console.log(`  ↓ скачиваю: ${url}`)
-  const res = await fetch(url)
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status} при загрузке ${url}`)
+  try {
+    const buf = await fetchWithRetry(url)
+    await writeFile(destPath, buf)
+    const kb = (buf.length / 1024).toFixed(0)
+    console.log(`    сохранён (${kb} КБ)`)
+  } catch (e) {
+    // Fallback: пробуем зеркало hf-mirror.com (иногда стабильнее на проблемных сетях)
+    if (url.startsWith('https://huggingface.co/')) {
+      const mirrorUrl = url.replace('https://huggingface.co/', 'https://hf-mirror.com/')
+      console.log(`  ↻ пробуем зеркало: ${mirrorUrl}`)
+      try {
+        const buf = await fetchWithRetry(mirrorUrl)
+        await writeFile(destPath, buf)
+        const kb = (buf.length / 1024).toFixed(0)
+        console.log(`    сохранён через зеркало (${kb} КБ)`)
+        return
+      } catch (e2) {
+        console.error(`  ✗ зеркало тоже не удалось: ${e2.message}`)
+      }
+    }
+    throw e
   }
-
-  // Для бинарных файлов пишем Buffer; для текстовых — тоже Buffer (универсально)
-  const buf = Buffer.from(await res.arrayBuffer())
-  await writeFile(destPath, buf)
-  const kb = (buf.length / 1024).toFixed(0)
-  console.log(`    сохранён (${kb} КБ)`)
 }
 
 // ---------------------------------------------------------------------------
