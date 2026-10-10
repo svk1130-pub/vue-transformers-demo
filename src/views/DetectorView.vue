@@ -250,7 +250,10 @@ function drawBoxes() {
     <!-- Превью изображения + canvas-overlay -->
     <Transition name="fade">
       <div v-if="imageUrl" class="detector__canvas-wrap">
-        <p v-if="inferencing" class="detector__inferring">Идёт детекция…</p>
+        <!-- ★ "Идёт детекция" — над изображением -->
+        <Transition name="fade">
+          <p v-if="inferencing" class="detector__inferring">Идёт детекция…</p>
+        </Transition>
         <div class="detector__canvas-inner">
           <img ref="imageEl" :src="imageUrl" alt="Загруженное изображение" class="detector__img" />
           <!-- Canvas поверх изображения; Transition появление -->
@@ -391,9 +394,10 @@ function drawBoxes() {
   pointer-events: none;
 }
 .detector__inferring {
-  margin-top: 8px;
+  margin-bottom: 8px;
   color: var(--color-text-muted);
   font-size: 14px;
+  font-style: italic;
 }
 
 .detector__results h2 {

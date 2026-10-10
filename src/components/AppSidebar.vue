@@ -4,9 +4,11 @@
  * Vue-техники:
  *   - <RouterLink> с авто-классом .router-link-active для подсветки активной ссылки
  *   - ссылки на хаб и демо-страницы
+ *   - краткий список Vue-технологий из единого справочника src/data/techStack.js
  */
 import { useDemoStore } from '../stores/demoStore'
 import { storeToRefs } from 'pinia'
+import { techStackShort } from '../data/techStack'
 
 const demoStore = useDemoStore()
 const { currentModel } = storeToRefs(demoStore)
@@ -49,7 +51,7 @@ const navItems = [
     </Transition>
 
     <div class="sidebar__footer">
-      <span>Composition API · Router · Pinia</span>
+      <span>{{ techStackShort.join(' · ') }}</span>
     </div>
   </aside>
 </template>

@@ -151,23 +151,27 @@ const fullTranslation = computed(() =>
   translatedSentences.value.map((s) => s.target).join(' '),
 )
 
-// --- Загрузка модели по умолчанию при монтировании ---
+// --- Загрузка обеих моделей при монтировании страницы ---
+// ★ ВАЖНО: статус модели в индикаторе зависит от effectiveDirection.
+//   Для пустого инпута effectiveDirection = 'en_ru' (нет кириллицы → EN→RU).
+//   Если предзагрузить только ru_en, индикатор покажет "Модель не загружена"
+//   (смотрит на en_ru), хотя сайдбар уже покажет "Активная модель: ru_en".
+//   Решение: грузим обе модели параллельно при монтировании.
 onMounted(async () => {
-  // Предзагружаем ru_en (наиболее вероятное направление для русскоязычного интерфейса)
   demoStore.setCurrentModel({
     task: MODELS.ru_en.task,
     name: MODELS.ru_en.model,
   })
-  await ruEn.load()
+
+  // Параллельная загрузка обеих моделей — статус станет 'ready'
+  // сразу после завершения первой из них.
+  await Promise.all([ruEn.load(), enRu.load()])
 })
 
 // Обновляем отображение модели в сайдбаре при смене направления
+// (обе модели уже загружены в onMounted — ленивая подгрузка не нужна)
 watch(effectiveDirection, (dir) => {
   demoStore.setCurrentModel({ task: MODELS[dir].task, name: MODELS[dir].model })
-  // Лениво подгружаем второй pipeline при первой необходимости
-  if (dir === 'en_ru' && !enRu.instance.value && !enRu.loading.value) {
-    enRu.load()
-  }
 })
 
 onBeforeUnmount(() => {
