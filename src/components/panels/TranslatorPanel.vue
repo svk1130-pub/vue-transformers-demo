@@ -79,13 +79,25 @@ const charCountClass = computed(() => {
   return ''
 })
 
-// --- Swap ---
 function swapDirection() {
+  // ★ Читаем направление ДО установки manualOverride
+  const currentDir = effectiveDirection.value
+  // ★ Инлайн-читаем текущий перевод (без зависимости от fullTranslation)
+  const currentOutput = translatedSentences.value
+    .map((s) => s.target)
+    .join(' ')
+    .trim()
+
   manualOverride.value = true
-  direction.value = effectiveDirection.value === 'ru_en' ? 'en_ru' : 'ru_en'
-  if (inputText.value.trim()) {
+  direction.value = currentDir === 'ru_en' ? 'en_ru' : 'ru_en'
+
+  // Если есть текущий перевод — переставляем input↔output и переводим обратно
+  if (currentOutput) {
+    inputText.value = currentOutput
+    translatedSentences.value = []
     translate()
   }
+  // Если перевода ещё нет — просто меняем направление
 }
 
 // --- Разбиение на предложения ---
